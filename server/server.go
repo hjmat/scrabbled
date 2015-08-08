@@ -36,7 +36,8 @@ func main() {
 		log.Fatal("Usage: server [--port <port>] CORPUS")
 	}
 
-	solver.Populate(flag.Arg(0))
+	err := solver.Populate(flag.Arg(0))
+        fatal("Unable to process corpus", err)
 
 	sock, err := zmq.NewSocket(zmq.REP)
 	fatal("Unable to create socket", err)
