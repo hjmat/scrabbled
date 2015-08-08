@@ -13,12 +13,10 @@ import (
 	"sort"
 )
 
-// map from key -> [words matching key]
+// Map from key -> [words matching key]
 var words = map[string][]string{}
 
-/*
- * alphabetic string sorting implementation
- */
+// Alphabetic string sorting implementation
 type sortChars []rune
 
 func (s sortChars) Less(i, j int) bool {
@@ -33,7 +31,7 @@ func (s sortChars) Len() int {
 	return len(s)
 }
 
-// sorts a string by character, i.e. cat -> act
+// Sorts a string by character, e.g. cat -> act
 func sortStringByChar(s string) string {
 	sChars := []rune(s)
 	sort.Sort(sortChars(sChars))
@@ -45,7 +43,7 @@ func Solve(hand string) []string {
 	return words[sortStringByChar(hand)]
 }
 
-// Pre process the word list for reuse
+// Preprocesses the word list
 func Populate(corpuspath string) error {
 	file, err := os.Open(corpuspath)
 	if err != nil {
