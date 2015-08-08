@@ -41,7 +41,6 @@ func main() {
 
 	sock, err := zmq.NewSocket(zmq.REP)
 	fatal("Unable to create socket", err)
-
 	defer sock.Close()
 
 	err = sock.Bind(fmt.Sprintf("tcp://*:%d", *portPtr))
@@ -59,11 +58,11 @@ func main() {
 
 		result := solver.Solve(*request.Hand)
 
-		reply := &scrabble.Response{Options: result}
-		replyMsg, err := proto.Marshal(reply)
+		response := &scrabble.Response{Options: result}
+		responseMsg, err := proto.Marshal(response)
 		fatal("Unable to marshal response", err)
 
-		_, err = sock.Send(string(replyMsg), 0)
+		_, err = sock.Send(string(responseMsg), 0)
 		fatal("Unable to send response", err)
 	}
 }
