@@ -1,0 +1,8 @@
+package proto;
+message Request {
+        required string hand = 1;
+}
+
+message Response {
+        repeated string options = 1;
+}

@@ -1,0 +1,8 @@
+A distributed scrabble cheating tool written in Go. It really has no reason to exist.
+I just wanted to try out go, zeromq and protocol buffers respectively.
+
+## Dependencies
+    * zeromq 4 http://zeromq.org/intro:get-the-software
+    * zmq4
+    * protocol buffers https://github.com/google/protobuf.git
+    * protobuf https://github.com/golang/protobuf
