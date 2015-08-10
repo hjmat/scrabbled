@@ -5,13 +5,13 @@
 
 /*
  * scrabbled server
- * USAGE: server [--port <PORT>] <path to corpus file>
  */
 
 package main
 
 import (
 	"github.com/hjmat/scrabbled/condlog"
+	"github.com/hjmat/scrabbled/keyloader"
 	scrabble "github.com/hjmat/scrabbled/proto"
 
 	"github.com/golang/protobuf/proto"
@@ -19,8 +19,10 @@ import (
 
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
-	"os"
+	"path"
+	"strings"
 )
 
 func serve(sock *zmq.Socket, solv *Solver) {
@@ -43,28 +45,39 @@ func serve(sock *zmq.Socket, solv *Solver) {
 	}
 }
 
-func usage() {
-	fmt.Println("Usage: server [OPTIONS] <PATH TO CORPUS>")
-	flag.PrintDefaults()
-	os.Exit(1)
+func initSecurity(client_key_path string, private_key_path string, sock *zmq.Socket) {
+	zmq.AuthStart()
+	private_key, _, err := keyloader.InitKeys(private_key_path)
+	condlog.Fatal(err, fmt.Sprintf("Unable to read key pair for private key '%v'", private_key_path))
+	sock.ServerAuthCurve("scrabble", private_key)
+
+	// Add all the public keys in the client key directory
+	files, err := ioutil.ReadDir(client_key_path)
+	condlog.Fatal(err, fmt.Sprintf("Unable to enumerate client keys in '%v'", client_key_path))
+	for _, f := range files {
+		if !f.IsDir() && strings.HasSuffix(f.Name(), ".public") {
+			buf, err := ioutil.ReadFile(path.Join(f.Name()))
+			condlog.Fatal(err, fmt.Sprintf("Unable to load public client key '%v'", client_key_path))
+			zmq.AuthCurveAdd("scrabble", string(buf))
+		}
+	}
 }
 
 func main() {
 	portPtr := flag.Int("port", 30000, "port")
+	keyPtr := flag.String("key", "server.private", "path to private key")
+	clientPtr := flag.String("clientkeys", "clients.allow", "path to directory containing public keys of clients")
+        corpusPtr := flag.String("corpus", "corpus.txt", "path to a newline-separated list of words")
 	flag.Parse()
 
-	if len(flag.Args()) != 1 {
-		usage()
-	}
-
 	solv := NewSolver()
-
-	err := solv.Populate(flag.Arg(0))
+	err := solv.Populate(path.Clean(*corpusPtr))
 	condlog.Fatal(err, "Unable to process corpus")
 
 	sock, err := zmq.NewSocket(zmq.REP)
 	condlog.Fatal(err, "Unable to create socket")
 	defer sock.Close()
+	initSecurity(path.Clean(*clientPtr), path.Clean(*keyPtr), sock)
 
 	err = sock.Bind(fmt.Sprintf("tcp://*:%d", *portPtr))
 	condlog.Fatal(err, "Unable to bind socket")
