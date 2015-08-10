@@ -13,8 +13,16 @@ import (
 	"sort"
 )
 
+func NewSolver() *Solver {
+     s := Solver{}
+     s.words = map[string][]string{}
+     return &s
+}
+
 // Map from key -> [words matching key]
-var words = map[string][]string{}
+type Solver struct {
+     words map[string][]string
+}
 
 // Alphabetic string sorting implementation
 type sortChars []rune
@@ -39,12 +47,14 @@ func sortStringByChar(s string) string {
 }
 
 // Finds dictionary words that match a scrabble hand
-func Solve(hand string) []string {
-	return words[sortStringByChar(hand)]
+func (s *Solver) Solve(hand string) []string {
+	return s.words[sortStringByChar(hand)]
 }
 
 // Preprocesses the word list
-func Populate(corpuspath string) error {
+func (s *Solver) Populate(corpuspath string) error {
+        s.words = map[string][]string{}
+
 	file, err := os.Open(corpuspath)
 	if err != nil {
 		return errors.New(fmt.Sprintf("Unable to open corpus '%s': %s", corpuspath, err))
@@ -56,7 +66,7 @@ func Populate(corpuspath string) error {
 	for scanner.Scan() {
 		word := scanner.Text()
 		key := sortStringByChar(word)
-		words[key] = append(words[key], word)
+		s.words[key] = append(s.words[key], word)
 	}
 
 	if scanner.Err() != nil {

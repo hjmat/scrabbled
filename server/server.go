@@ -12,7 +12,8 @@ package main
 
 import (
 	scrabble "github.com/hjmat/scrabbled/proto"
-	solver "github.com/hjmat/scrabbled/solver"
+        "github.com/hjmat/scrabbled/solver"
+        "github.com/hjmat/scrabbled/logutil"
 
 	"github.com/golang/protobuf/proto"
 	zmq "github.com/pebbe/zmq4"
@@ -20,12 +21,33 @@ import (
 	"flag"
 	"fmt"
 	"log"
+        "os"
 )
 
-func fatal(msg string, err error) {
-	if err != nil {
-		log.Fatal(msg, ": ", err)
-	}
+func serve(sock *zmq.Socket, solv *solver.Solver) {
+     for {
+          requestMsg, err := sock.Recv(0)
+          logutil.Fatal("Unable to receive request", err)
+
+          request := &scrabble.Request{}
+          err = proto.Unmarshal([]byte(requestMsg), request)
+          logutil.Fatal("Unable to unmarshal request", err)
+
+          result := solv.Solve(*request.Hand)
+
+          response := &scrabble.Response{Options: result}
+          responseMsg, err := proto.Marshal(response)
+          logutil.Fatal("Unable to marshal response", err)
+
+          _, err = sock.Send(string(responseMsg), 0)
+          logutil.Fatal("Unable to send response", err)
+     }
+}
+
+func usage() {
+     fmt.Println("Usage: server [OPTIONS] <PATH TO CORPUS>")
+     flag.PrintDefaults()
+     os.Exit(1)
 }
 
 func main() {
@@ -33,36 +55,22 @@ func main() {
 	flag.Parse()
 
 	if len(flag.Args()) != 1 {
-		log.Fatal("Usage: server [--port <port>] CORPUS")
+           usage()
 	}
 
-	err := solver.Populate(flag.Arg(0))
-        fatal("Unable to process corpus", err)
+        solv := solver.NewSolver()
+
+	err := solv.Populate(flag.Arg(0))
+        logutil.Fatal("Unable to process corpus", err)
 
 	sock, err := zmq.NewSocket(zmq.REP)
-	fatal("Unable to create socket", err)
-	defer sock.Close()
+        logutil.Fatal("Unable to create socket", err)
+        defer sock.Close()
 
 	err = sock.Bind(fmt.Sprintf("tcp://*:%d", *portPtr))
-	fatal("Unable to bind socket", err)
+	logutil.Fatal("Unable to bind socket", err)
 
 	log.Printf("Listening on port %d", *portPtr)
 
-	for {
-		requestMsg, err := sock.Recv(0)
-		fatal("Unable to receive request", err)
-
-		request := &scrabble.Request{}
-		err = proto.Unmarshal([]byte(requestMsg), request)
-		fatal("Unable to unmarshal request", err)
-
-		result := solver.Solve(*request.Hand)
-
-		response := &scrabble.Response{Options: result}
-		responseMsg, err := proto.Marshal(response)
-		fatal("Unable to marshal response", err)
-
-		_, err = sock.Send(string(responseMsg), 0)
-		fatal("Unable to send response", err)
-	}
+        serve(sock, solv)
 }
