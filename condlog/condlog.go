@@ -3,19 +3,19 @@
  * All rights reserved. See LICENSE.
  */
 
-package logutil
+package condlog
 
 import (
-       	"log"
+	"log"
 )
 
-func Error(msg string, err error) {
-     	if err != nil {
+func Print(err error, msg ...string) {
+	if err != nil {
 		log.Print(msg, ": ", err)
 	}
 }
 
-func Fatal(msg string, err error) {
+func Fatal(err error, msg ...string) {
 	if err != nil {
 		log.Fatal(msg, ": ", err)
 	}

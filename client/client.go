@@ -5,14 +5,14 @@
 
 /*
  * scrabbled client
- * USAGE: client [--port <PORT> --host <HOSTNAME>]
+ * USAGE: client [--port <PORT>] [--host <HOSTNAME>]
  */
 
 package main
 
 import (
+	"github.com/hjmat/scrabbled/condlog"
 	scrabble "github.com/hjmat/scrabbled/proto"
-        "github.com/hjmat/scrabbled/logutil"
 
 	"github.com/golang/protobuf/proto"
 	zmq "github.com/pebbe/zmq4"
@@ -24,22 +24,22 @@ import (
 )
 
 func solve(hand string, sock *zmq.Socket) []string {
-	req := &scrabble.Request{Hand: proto.String(hand)}
+	req := &scrabble.Request{Hand: hand}
 
 	reqMsg, err := proto.Marshal(req)
-        logutil.Fatal("Unable to marshal message", err)
+	condlog.Fatal(err, "Unable to marshal message")
 
 	_, err = sock.Send(string(reqMsg), 0)
-        logutil.Fatal("Unable to marshal message", err)
+	condlog.Fatal(err, "Unable to marshal message")
 
 	resMsg, err := sock.Recv(0)
-        logutil.Fatal("Unable to receive response", err)
+	condlog.Fatal(err, "Unable to receive response")
 
 	res := &scrabble.Response{}
 	err = proto.Unmarshal([]byte(resMsg), res)
-        logutil.Fatal("Unable to unmarshal request: ", err)
+	condlog.Fatal(err, "Unable to unmarshal request")
 
-	return res.Options
+	return res.Words
 }
 
 func main() {
@@ -48,11 +48,11 @@ func main() {
 	flag.Parse()
 
 	sock, err := zmq.NewSocket(zmq.REQ)
-        logutil.Fatal("Unable to create socket: ", err)
+	condlog.Fatal(err, "Unable to create socket")
 	defer sock.Close()
 
 	err = sock.Connect(fmt.Sprintf("tcp://%s:%d", *hostPtr, *portPtr))
-        logutil.Fatal("Unable to connect: ", err)
+	condlog.Fatal(err, "Unable to connect")
 
 	in := bufio.NewScanner(os.Stdin)
 	fmt.Print("> ")
@@ -63,8 +63,8 @@ func main() {
 		for _, r := range results {
 			fmt.Println(r)
 		}
-                fmt.Print("> ")
+		fmt.Print("> ")
 	}
 
-        logutil.Fatal("Unable to read from stdin: ", in.Err())
+	condlog.Fatal(in.Err(), "Unable to read from stdin")
 }

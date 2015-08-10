@@ -11,9 +11,8 @@
 package main
 
 import (
+	"github.com/hjmat/scrabbled/condlog"
 	scrabble "github.com/hjmat/scrabbled/proto"
-        "github.com/hjmat/scrabbled/solver"
-        "github.com/hjmat/scrabbled/logutil"
 
 	"github.com/golang/protobuf/proto"
 	zmq "github.com/pebbe/zmq4"
@@ -21,33 +20,33 @@ import (
 	"flag"
 	"fmt"
 	"log"
-        "os"
+	"os"
 )
 
-func serve(sock *zmq.Socket, solv *solver.Solver) {
-     for {
-          requestMsg, err := sock.Recv(0)
-          logutil.Fatal("Unable to receive request", err)
+func serve(sock *zmq.Socket, solv *Solver) {
+	for {
+		requestMsg, err := sock.Recv(0)
+		condlog.Fatal(err, "Unable to receive request")
 
-          request := &scrabble.Request{}
-          err = proto.Unmarshal([]byte(requestMsg), request)
-          logutil.Fatal("Unable to unmarshal request", err)
+		request := &scrabble.Request{}
+		err = proto.Unmarshal([]byte(requestMsg), request)
+		condlog.Fatal(err, "Unable to unmarshal request")
 
-          result := solv.Solve(*request.Hand)
+		result := solv.Solve(request.Hand)
 
-          response := &scrabble.Response{Options: result}
-          responseMsg, err := proto.Marshal(response)
-          logutil.Fatal("Unable to marshal response", err)
+		response := &scrabble.Response{Words: result}
+		responseMsg, err := proto.Marshal(response)
+		condlog.Fatal(err, "Unable to marshal response")
 
-          _, err = sock.Send(string(responseMsg), 0)
-          logutil.Fatal("Unable to send response", err)
-     }
+		_, err = sock.Send(string(responseMsg), 0)
+		condlog.Fatal(err, "Unable to send response")
+	}
 }
 
 func usage() {
-     fmt.Println("Usage: server [OPTIONS] <PATH TO CORPUS>")
-     flag.PrintDefaults()
-     os.Exit(1)
+	fmt.Println("Usage: server [OPTIONS] <PATH TO CORPUS>")
+	flag.PrintDefaults()
+	os.Exit(1)
 }
 
 func main() {
@@ -55,22 +54,22 @@ func main() {
 	flag.Parse()
 
 	if len(flag.Args()) != 1 {
-           usage()
+		usage()
 	}
 
-        solv := solver.NewSolver()
+	solv := NewSolver()
 
 	err := solv.Populate(flag.Arg(0))
-        logutil.Fatal("Unable to process corpus", err)
+	condlog.Fatal(err, "Unable to process corpus")
 
 	sock, err := zmq.NewSocket(zmq.REP)
-        logutil.Fatal("Unable to create socket", err)
-        defer sock.Close()
+	condlog.Fatal(err, "Unable to create socket")
+	defer sock.Close()
 
 	err = sock.Bind(fmt.Sprintf("tcp://*:%d", *portPtr))
-	logutil.Fatal("Unable to bind socket", err)
+	condlog.Fatal(err, "Unable to bind socket")
 
 	log.Printf("Listening on port %d", *portPtr)
 
-        serve(sock, solv)
+	serve(sock, solv)
 }

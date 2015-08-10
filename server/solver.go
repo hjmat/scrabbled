@@ -3,7 +3,7 @@
  * All rights reserved. See LICENSE.
  */
 
-package solver
+package main
 
 import (
 	"bufio"
@@ -14,14 +14,14 @@ import (
 )
 
 func NewSolver() *Solver {
-     s := Solver{}
-     s.words = map[string][]string{}
-     return &s
+	s := Solver{}
+	s.words = map[string][]string{}
+	return &s
 }
 
 // Map from key -> [words matching key]
 type Solver struct {
-     words map[string][]string
+	words map[string][]string
 }
 
 // Alphabetic string sorting implementation
@@ -53,7 +53,7 @@ func (s *Solver) Solve(hand string) []string {
 
 // Preprocesses the word list
 func (s *Solver) Populate(corpuspath string) error {
-        s.words = map[string][]string{}
+	s.words = map[string][]string{}
 
 	file, err := os.Open(corpuspath)
 	if err != nil {
