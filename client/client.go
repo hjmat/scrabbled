@@ -50,6 +50,8 @@ func initSecurity(private_key_path string, server_key_path string, sock *zmq.Soc
 	condlog.Fatal(err, fmt.Sprintf("Unable to read key pair for private key '%v'", private_key_path))
 	zmq.AuthCurveAdd("scrabble", public_key)
 
+	err = keyloader.CheckPermissions(server_key_path)
+	condlog.Fatal(err, "Untrustworthy key file")
 	server_key_buf, err := ioutil.ReadFile(server_key_path)
 	condlog.Fatal(err, fmt.Sprintf("Unable to load public server key '%v'", server_key_path))
 	server_key := string(server_key_buf)
