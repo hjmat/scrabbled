@@ -56,8 +56,11 @@ func initSecurity(client_key_path string, private_key_path string, sock *zmq.Soc
 	condlog.Fatal(err, fmt.Sprintf("Unable to enumerate client keys in '%v'", client_key_path))
 	for _, f := range files {
 		if !f.IsDir() && strings.HasSuffix(f.Name(), ".public") {
-			buf, err := ioutil.ReadFile(path.Join(f.Name()))
-			condlog.Fatal(err, fmt.Sprintf("Unable to load public client key '%v'", client_key_path))
+			fullpath := path.Join(client_key_path, f.Name())
+			err = keyloader.CheckPermissions(fullpath)
+			condlog.Fatal(err, "Untrustworthy key file")
+			buf, err := ioutil.ReadFile(fullpath)
+			condlog.Fatal(err, fmt.Sprintf("Unable to load public client key '%v'", fullpath))
 			zmq.AuthCurveAdd("scrabble", string(buf))
 		}
 	}
@@ -67,7 +70,7 @@ func main() {
 	portPtr := flag.Int("port", 30000, "port")
 	keyPtr := flag.String("key", "server.private", "path to private key")
 	clientPtr := flag.String("clientkeys", "clients.allow", "path to directory containing public keys of clients")
-        corpusPtr := flag.String("corpus", "corpus.txt", "path to a newline-separated list of words")
+	corpusPtr := flag.String("corpus", "corpus.txt", "path to a newline-separated list of words")
 	flag.Parse()
 
 	solv := NewSolver()

@@ -19,8 +19,8 @@ func NewSolver() *Solver {
 	return &s
 }
 
-// Map from key -> [words matching key]
 type Solver struct {
+	// Map from key -> [words matching key]
 	words map[string][]string
 }
 
@@ -53,8 +53,6 @@ func (s *Solver) Solve(hand string) []string {
 
 // Preprocesses the word list
 func (s *Solver) Populate(corpuspath string) error {
-	s.words = map[string][]string{}
-
 	file, err := os.Open(corpuspath)
 	if err != nil {
 		return errors.New(fmt.Sprintf("Unable to open corpus '%s': %s", corpuspath, err))

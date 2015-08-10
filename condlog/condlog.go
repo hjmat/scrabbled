@@ -5,6 +5,10 @@
 
 package condlog
 
+/*
+ * Conditional logging, passes through its arguments to log.* iff err is not nil.
+ */
+
 import (
 	"log"
 )

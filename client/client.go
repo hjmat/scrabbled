@@ -57,10 +57,10 @@ func initSecurity(private_key_path string, server_key_path string, sock *zmq.Soc
 }
 
 func main() {
-	hostPtr := flag.String("host", "localhost", "host")
-	portPtr := flag.Int("port", 30000, "port")
-	keyPtr := flag.String("key", "client.private", "Private key")
-	servKeyPtr := flag.String("servkey", "server.public", "Server public key")
+	hostPtr := flag.String("host", "localhost", "hostname of the server")
+	portPtr := flag.Int("port", 30000, "port that the server runs on")
+	keyPtr := flag.String("key", "client.private", "private key for authentication")
+	servKeyPtr := flag.String("servkey", "server.public", "public key of the server")
 	flag.Parse()
 
 	sock, err := zmq.NewSocket(zmq.REQ)
